@@ -58,8 +58,7 @@ public class MapReduceDemo {
     {
         if(!fileIngestionComplete.get())
         {
-            // Must synchronize. The subtraction of two atomic values is not atomic
-            boolean stateFlipped = fileIngestionComplete.compareAndSet(false,(fileRegisteredCount.get() - fileIngestedCount.get() < 1));
+            boolean stateFlipped = fileIngestionComplete.compareAndSet(false,(getCountRemainingFiles() < 1));
             if(stateFlipped)
             {
                 // Wakeup any threads waiting on lines
@@ -70,6 +69,15 @@ public class MapReduceDemo {
             }
         }
         return fileIngestionComplete.get();
+    }
+
+    /**
+     * No need to synchronize.
+     * Worst case is returns a larger count which causes another loop
+     * @return
+     */
+    private int getCountRemainingFiles() {
+        return fileRegisteredCount.get() - fileIngestedCount.get();
     }
 
     public final AtomicInteger lineProducedCount = new AtomicInteger(0);

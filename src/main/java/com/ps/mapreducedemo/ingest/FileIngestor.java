@@ -39,6 +39,12 @@ public class FileIngestor extends MapReduceNodeProcessor {
         return ingestFiles();
     }
 
+    /**
+     * Ingests all files in target folder.
+     * Demo does not distinguish between them.
+     *  System will generate word counts for all input files combined
+     * @return
+     */
     private boolean ingestFiles() {
         long threadId = Thread.currentThread().getId();
 
@@ -48,11 +54,14 @@ public class FileIngestor extends MapReduceNodeProcessor {
         Path currentFile;
         while((currentFile = this.fileQueue.poll()) != null) {
             ingestOneFile(threadId, currentFile);
-            // Activate any waiting threads
+            //
             synchronized (context.monitor)
             {
-                // Only increments when all lines are available. Do so in sync block to prevent other thread from passing check and entering wait state.
+                // Record that another file was loaded
+                // Synchronized to prevent LineMapper thread
+                //  from checking for completion while count is changing.
                 context.fileIngestedCount.incrementAndGet();
+                // Wake up any waiting LineMapper threads to process the lines
                 context.monitor.notifyAll();
             }
         }

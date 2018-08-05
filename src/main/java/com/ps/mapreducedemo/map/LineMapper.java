@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * Created by Edwin on 4/21/2016.
  * Creates histogram (word frequency count) for a line of text
- * Writes a file named word.thread.id.cnt for each word found
+ * Writes a file named word.{count}.cnt for each word found
  */
 public class LineMapper extends MapReduceNodeProcessor {
     static Logger logger = LogManager.getLogger(LineMapper.class);
@@ -58,10 +58,13 @@ public class LineMapper extends MapReduceNodeProcessor {
         // While there are lines to process or files which can produce lines ...
         // Process each line and output intermediate file
         String currentLine=null;
-        // Short-circuit logic - Always force the system to check for a line to process. If no line then prevent falling out until all files ingested.
-        // The isFileIngestionComplete() method sends a NotifyAll when it returns true for the first time so not an issue for the calling thread.
+        // Short-circuit logic - Always force the system to check for a line to process.
+        // If no line then prevent falling out until all files ingested.
+        // The isFileIngestionComplete() method sends a NotifyAll when it returns true for the first time
+        //  so not an issue for the calling thread.
         // Problem happens if another thread has already gotten false and is heading towards the wait state block
-        // Solution: The underlying fileIngestedCount atomic integer is only updated inside a sync-block (might not need atomic for that one now)
+        // Solution: The underlying fileIngestedCount atomic integer is only updated inside a sync-block
+        //  (might not need atomic for that one now)
         //  this loop does not enter the wait state until checking the condition again inside the same sync-block.
         // Cannot get in before the FileIngestor has flipped flag, so won't get into wait mode.
         while((currentLine = this.lineQueue.poll()) != null || !context.isFileIngestionComplete()) {
@@ -76,7 +79,8 @@ public class LineMapper extends MapReduceNodeProcessor {
                     synchronized (context.monitor)
                     {
                         try {
-                            // Checking inside synchronized block. Other code cannot be about to increment counter.
+                            // If no lines to process but still files pending
+                            //  make the thread wait until new file available
                             if(!context.isFileIngestionComplete())
                                 context.monitor.wait();
                         } catch (InterruptedException e) {
