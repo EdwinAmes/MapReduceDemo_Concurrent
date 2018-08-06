@@ -76,6 +76,7 @@ public class LineMapper extends MapReduceNodeProcessor {
                 else
                 {
                     // Don't waste CPU cycles waiting for line production
+                    //  and don't risk thread ending before processing lines of last file
                     synchronized (context.monitor)
                     {
                         try {
