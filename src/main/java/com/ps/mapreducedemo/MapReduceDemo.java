@@ -49,9 +49,16 @@ public class MapReduceDemo {
     public final AtomicBoolean fileIngestionComplete = new AtomicBoolean(false);
 
     /**
+     * No need to synchronize.
+     * Worst case is returns a larger count which causes another loop
+     * @return
+     */
+    private int getCountRemainingFiles() {
+        return fileRegisteredCount.get() - fileIngestedCount.get();
+    }
+
+    /**
      * Check if all registered files have been processed.
-     * Files are all registered before processing begins => no race condition.
-     * TO DO: Will be responsible for NotifyAll to activate any waiting threads to finish processing
      * @return
      */
     public boolean isFileIngestionComplete()
@@ -69,15 +76,6 @@ public class MapReduceDemo {
             }
         }
         return fileIngestionComplete.get();
-    }
-
-    /**
-     * No need to synchronize.
-     * Worst case is returns a larger count which causes another loop
-     * @return
-     */
-    private int getCountRemainingFiles() {
-        return fileRegisteredCount.get() - fileIngestedCount.get();
     }
 
     public final AtomicInteger lineProducedCount = new AtomicInteger(0);
