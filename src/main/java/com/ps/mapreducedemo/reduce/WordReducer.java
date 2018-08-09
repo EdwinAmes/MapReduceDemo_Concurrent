@@ -45,10 +45,10 @@ public class WordReducer extends MapReduceNodeProcessor {
     {
         long threadId = Thread.currentThread().getId();
 
-        Path inputPath = context.getBasePath().resolve(Paths.get(MapReduceDemo.MAP_FOLDER));
+        Path inputPath = context.loadBasePath().resolve(Paths.get(MapReduceDemo.MAP_FOLDER));
         ensureFolderExists(inputPath);
 
-        Path outputPath = context.getBasePath().resolve(Paths.get(MapReduceDemo.REDUCE_FOLDER));
+        Path outputPath = context.loadBasePath().resolve(Paths.get(MapReduceDemo.REDUCE_FOLDER));
         ensureFolderExists(outputPath);
 
         String currentWord=null;

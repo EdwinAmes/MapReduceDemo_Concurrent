@@ -33,7 +33,7 @@ public class MapReduceDemo {
         logger.trace("Map Reduce Complete");
     }
 
-    public Path getBasePath() {
+    public Path loadBasePath() {
         return basePath;
     }
     private Path basePath = null;
@@ -104,7 +104,7 @@ public class MapReduceDemo {
         return true;
     }
 
-    private Path getBasePath(String rootPath){
+    private Path loadBasePath(String rootPath){
         Path basePath = Paths.get(rootPath);
         try {
             basePath = basePath.toRealPath(LinkOption.NOFOLLOW_LINKS);
@@ -128,7 +128,7 @@ public class MapReduceDemo {
      * @param rootPath
      */
     public void doMapReduce(String rootPath) {
-        basePath = getBasePath(rootPath);
+        basePath = loadBasePath(rootPath);
         if(basePath == null){
             return;
         }

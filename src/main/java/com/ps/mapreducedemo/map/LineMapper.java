@@ -49,7 +49,7 @@ public class LineMapper extends MapReduceNodeProcessor {
      * @return
      */
     private boolean mapLines() {
-        Path outputPath = context.getBasePath().resolve(Paths.get(MapReduceDemo.MAP_FOLDER));
+        Path outputPath = context.loadBasePath().resolve(Paths.get(MapReduceDemo.MAP_FOLDER));
 
         ensureFolderExists(outputPath);
 
@@ -108,6 +108,7 @@ public class LineMapper extends MapReduceNodeProcessor {
     private void writeOrUpdateOneWordMappingFile(Path outputPath, long threadId, Map.Entry<String, Long> entry) {
         String word = entry.getKey();
 
+        // Using the thread id in file name eliminates possibility of threads contending for file
         String fileName = word + ".thread." + threadId + ".mp";
         Path wordFilePath = outputPath.resolve(fileName);
 
