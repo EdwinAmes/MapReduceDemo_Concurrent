@@ -1,3 +1,5 @@
+package util;
+
 import com.ps.mapreducedemo.util.FileSplitter;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -23,11 +25,8 @@ public class FileSplitterTest {
     @BeforeClass
     public static void setupEnv()
     {
-        /**
-         * Note: Approach only works when the files are not contained in the jar as resources
-         */
         ClassLoader classLoader = FileSplitterTest.class.getClassLoader();
-        File file = new File(classLoader.getResource("filesplitter/OneLine.txt").getFile());
+        File file = new File(classLoader.getResource("inputFiles/OneLine.txt").getFile());
         basePath = file.getParentFile().toPath();
     }
 

@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
  * Counts the words
  */
 public class LineHistogramMaker {
-    Pattern matchNonLettersPattern = Pattern.compile("[^a-zA-Z ]");
+    Pattern matchNonLettersPattern = Pattern.compile("\\p{Punct}");
 
     public Map<String, Long> getHistogramForLine(String line)
     {

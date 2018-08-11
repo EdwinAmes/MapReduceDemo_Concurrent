@@ -1,3 +1,5 @@
+package util;
+
 import com.ps.mapreducedemo.util.LineHistogramMaker;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +22,12 @@ public class LineHistogramTest {
     }
 
     private LineHistogramMaker sut;
+
+    @Test
+    public void when_given_punctuation_strips_it_out(){
+        Map<String, Long> result = sut.getHistogramForLine("!@#$%^&**()-+.,;:[]{}|\\/?<>~`=\"");
+        assertThat(result.size(), is(equalTo(0)));
+    }
 
     @Test
     public void when_given_empty_string_returns_empty_map()
