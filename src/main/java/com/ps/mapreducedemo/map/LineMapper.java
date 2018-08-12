@@ -116,7 +116,7 @@ public class LineMapper extends MapReduceNodeProcessor {
             // Overwrite the file
             fileUtils.overwriteFile(wordFilePath, Long.toString(currentCountForWord));
         } catch (IOException e) {
-            logger.error("Error Writing Mapping File Thread={} Word={} ", threadId, word);
+            logger.error("Error Writing Mapping File Thread={} Word={}", threadId, word, e);
         }
     }
 }

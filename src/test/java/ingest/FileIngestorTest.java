@@ -36,7 +36,7 @@ public class FileIngestorTest {
     }
 
     @Test
-    public void loadNoFilesAndNothingChanges(){
+    public void load_No_Files_And_Nothing_Changes(){
         assertThat(mapReduceState.isFileIngestionComplete(), equalTo(false));
         assertThat(mapReduceState.getCountFilesQueuedForProcessing(), equalTo(0));
         assertThat(mapReduceState.getCountLinesQueuedForProcessing(), equalTo(0));
@@ -54,7 +54,7 @@ public class FileIngestorTest {
     }
 
     @Test
-    public void loads3Files4LinesCorrectly(){
+    public void loads_3_Files_4_Lines_Correctly(){
         PathUtils.loadInputFilePathsIntoQueue(basePath,mapReduceState);
         assertThat(mapReduceState.isFileIngestionComplete(), equalTo(false));
         assertThat(mapReduceState.getCountFilesQueuedForProcessing(), equalTo(3));

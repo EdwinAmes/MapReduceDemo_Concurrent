@@ -7,9 +7,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.List;
 
 
+import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.TRUNCATE_EXISTING;
 import static java.nio.file.StandardOpenOption.WRITE;
 
@@ -19,7 +21,7 @@ public class FileUtils {
 
     public void overwriteFile(Path filePath, String content) throws IOException {
         try (OutputStream out = new BufferedOutputStream(
-                Files.newOutputStream(filePath, WRITE, TRUNCATE_EXISTING))) {
+                Files.newOutputStream(filePath, WRITE, TRUNCATE_EXISTING, CREATE))) {
             byte[] contentData = content.getBytes(charSet);
             out.write(contentData, 0, contentData.length);
         }

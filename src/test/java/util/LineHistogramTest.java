@@ -4,9 +4,11 @@ import com.ps.mapreducedemo.util.LineHistogramMaker;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsEqual.equalTo;
 
@@ -27,6 +29,13 @@ public class LineHistogramTest {
     public void when_given_punctuation_strips_it_out(){
         Map<String, Long> result = sut.getHistogramForLine("!@#$%^&**()-+.,;:[]{}|\\/?<>~`=\"");
         assertThat(result.size(), is(equalTo(0)));
+    }
+
+    @Test
+    public void when_given_upper_case_converts_to_lower(){
+        Map<String, Long> result = sut.getHistogramForLine("aCb, CDB, abc");
+        assertThat(result.size(), is(equalTo(3)));
+        assertThat(result.keySet(), containsInAnyOrder("acb", "cdb", "abc"));
     }
 
     @Test
