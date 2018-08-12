@@ -1,18 +1,17 @@
 package com.ps.mapreducedemo.map;
 
 import com.ps.mapreducedemo.MapReduceDemo;
+import com.ps.mapreducedemo.MapReduceState;
+import com.ps.mapreducedemo.util.FileUtils;
 import com.ps.mapreducedemo.util.LineHistogramMaker;
 import com.ps.mapreducedemo.MapReduceNodeProcessor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
 
 /**
  * Created by Edwin on 4/21/2016.
@@ -22,17 +21,15 @@ import java.util.Set;
 public class LineMapper extends MapReduceNodeProcessor {
     static Logger logger = LogManager.getLogger(LineMapper.class);
 
-    private Queue<String> lineQueue;
-    private Set<String> wordSet;
+    private MapReduceState mapReduceState;
     private MapReduceDemo context;
     private LineHistogramMaker histogramMaker = new LineHistogramMaker();
 
-    public LineMapper(Queue<String> lineQueue, Set<String> wordQueue, MapReduceDemo context) {
-        this.lineQueue = lineQueue;
-        this.wordSet = wordQueue;
+    public LineMapper(MapReduceState mapReduceState, MapReduceDemo context, FileUtils fileUtils) {
+        super(fileUtils);
+        this.mapReduceState = mapReduceState;
         this.context = context;
     }
-
 
     @Override
     public void run() {
@@ -67,23 +64,23 @@ public class LineMapper extends MapReduceNodeProcessor {
         //  (might not need atomic for that one now)
         //  this loop does not enter the wait state until checking the condition again inside the same sync-block.
         // Cannot get in before the FileIngestor has flipped flag, so won't get into wait mode.
-        while((currentLine = this.lineQueue.poll()) != null || !context.isFileIngestionComplete()) {
+        while((currentLine = mapReduceState.popNextLineFromQueue()) != null || !mapReduceState.isFileIngestionComplete()) {
                 if(currentLine != null) {
                     logger.trace("Starting Processing Line Thread Id={} Line={}",  + threadId, currentLine);
                     writeOrUpdateWordMappingFilesForLine(outputPath, threadId, currentLine);
-                    context.lineConsumedCount.incrementAndGet();
+                    mapReduceState.notifyOneLineConsumed();
                 }
                 else
                 {
                     // Don't waste CPU cycles waiting for line production
                     //  and don't risk thread ending before processing lines of last file
-                    synchronized (context.monitor)
+                    synchronized (mapReduceState.MONITOR)
                     {
                         try {
                             // If no lines to process but still files pending
                             //  make the thread wait until new file available
-                            if(!context.isFileIngestionComplete())
-                                context.monitor.wait();
+                            if(!mapReduceState.isFileIngestionComplete())
+                                mapReduceState.MONITOR.wait();
                         } catch (InterruptedException e) {
                             // Ignore
                         }
@@ -98,7 +95,7 @@ public class LineMapper extends MapReduceNodeProcessor {
         for(Map.Entry<String, Long> entry : histogram.entrySet())
         {
             //
-            wordSet.add(entry.getKey());
+            mapReduceState.addWord(entry.getKey());
 
             // Update file for that partition
             writeOrUpdateOneWordMappingFile(outputPath, threadId, entry);
@@ -117,7 +114,7 @@ public class LineMapper extends MapReduceNodeProcessor {
 
         try {
             // Overwrite the file
-            Files.write(wordFilePath, Long.toString(currentCountForWord).getBytes());
+            fileUtils.overwriteFile(wordFilePath, Long.toString(currentCountForWord));
         } catch (IOException e) {
             logger.error("Error Writing Mapping File Thread={} Word={} ", threadId, word);
         }

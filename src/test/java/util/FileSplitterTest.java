@@ -1,6 +1,7 @@
 package util;
 
 import com.ps.mapreducedemo.util.FileSplitter;
+import com.ps.mapreducedemo.util.FileUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -37,7 +38,7 @@ public class FileSplitterTest {
     @Before
     public void setup()
     {
-        sut = new FileSplitter();
+        sut = new FileSplitter(new FileUtils());
     }
 
     @Test

@@ -1,8 +1,11 @@
 package com.ps.mapreducedemo;
 
+import com.ps.mapreducedemo.util.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
@@ -10,6 +13,11 @@ import java.util.concurrent.Callable;
  * Created by Edwin on 4/21/2016.
  */
 public abstract class MapReduceNodeProcessor implements Runnable, Callable<Boolean> {
+    static Logger logger = LogManager.getLogger(MapReduceNodeProcessor.class);
+    protected FileUtils fileUtils;
+    public MapReduceNodeProcessor(FileUtils fileUtils) {
+        this.fileUtils = fileUtils;
+    }
 
     protected void ensureFolderExists(Path folderPath) {
         File outputFolder = folderPath.toFile();
@@ -24,10 +32,10 @@ public abstract class MapReduceNodeProcessor implements Runnable, Callable<Boole
         if(wordFile.exists())
         {
             try {
-                String currentCountAsString = new String(Files.readAllBytes(wordFilePath));
+                String currentCountAsString = fileUtils.readFileContents(wordFilePath);
                 currentCountForWord = Long.parseLong(currentCountAsString);
             } catch (IOException e) {
-                e.printStackTrace();
+                logger.error("Unable to read file: {}", wordFilePath);
             }
         }
         return currentCountForWord;

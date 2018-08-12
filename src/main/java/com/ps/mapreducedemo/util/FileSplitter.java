@@ -20,6 +20,11 @@ import java.util.stream.Collectors;
 public class FileSplitter {
     static Logger logger = LogManager.getLogger(FileSplitter.class);
 
+    private FileUtils fileUtils;
+    public FileSplitter(FileUtils fileUtils) {
+        this.fileUtils = fileUtils;
+    }
+
     /**
      * Convenience Method takes path as string
      * @param fileNameFullPath

@@ -1,31 +1,29 @@
 package com.ps.mapreducedemo.ingest;
 
-import com.ps.mapreducedemo.MapReduceDemo;
+import com.ps.mapreducedemo.MapReduceState;
 import com.ps.mapreducedemo.util.FileSplitter;
 import com.ps.mapreducedemo.MapReduceNodeProcessor;
+import com.ps.mapreducedemo.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
 
 /**
  * Created by Edwin on 4/21/2016.
  */
 public class FileIngestor extends MapReduceNodeProcessor {
-    private FileSplitter fileSplitter = new FileSplitter();
-    private Queue<Path> fileQueue;
-    private Queue<String> lineQueue;
-    private MapReduceDemo context;
+    private FileSplitter fileSplitter;
+    private MapReduceState mapReduceState;
 
     static Logger logger = LogManager.getLogger(FileIngestor.class);
 
-    public FileIngestor(Queue<Path> fileQueue, Queue<String> lineQueue, MapReduceDemo context) {
-        this.lineQueue = lineQueue;
-        this.fileQueue = fileQueue;
-        this.context = context;
+    public FileIngestor(MapReduceState mapReduceState, FileUtils fileUtils) {
+        super(fileUtils);
+        fileSplitter = new FileSplitter(fileUtils);
+        this.mapReduceState = mapReduceState;
     }
 
     @Override
@@ -48,35 +46,36 @@ public class FileIngestor extends MapReduceNodeProcessor {
     private boolean ingestFiles() {
         long threadId = Thread.currentThread().getId();
 
-        logger.trace("Before Processing Files - Thread Id: {} Files In Queue: {}", threadId,  this.fileQueue.size());
+        logger.trace("Before Processing Files - Thread Id: {} Files In Queue: {}", threadId,
+                mapReduceState.getCountFilesQueuedForProcessing());
 
         // Process each file and put its lines on the queue
         Path currentFile;
-        while((currentFile = this.fileQueue.poll()) != null) {
+        while((currentFile = mapReduceState.popNextFileFromQueue()) != null) {
             ingestOneFile(threadId, currentFile);
             //
-            synchronized (context.monitor)
+            synchronized (mapReduceState.MONITOR)
             {
                 // Record that another file was loaded
                 // Synchronized to prevent LineMapper thread
                 //  from checking for completion while count is changing.
-                context.fileIngestedCount.incrementAndGet();
+                mapReduceState.notifyOneFileIngested();
                 // Wake up any waiting LineMapper threads to process the lines
-                context.monitor.notifyAll();
+                mapReduceState.MONITOR.notifyAll();
             }
         }
         return true;
     }
 
     private void ingestOneFile(long threadId, Path currentFile) {
-        logger.trace("Starting Processing File Thread Id={} Name={} Files In Queue={}", threadId, currentFile.getFileName(), this.fileQueue.size());
+        logger.trace("Starting Processing File Thread Id={} Name={} Files In Queue={}",
+                threadId, currentFile.getFileName(), mapReduceState.getCountFilesQueuedForProcessing());
 
         Optional<List<String>> optionalLineList = fileSplitter.split(currentFile);
         if(optionalLineList.isPresent())
         {
             optionalLineList.get().forEach(line -> {
-                this.lineQueue.add(line);
-                this.context.lineProducedCount.incrementAndGet();
+                mapReduceState.addLineToQueue(line);
             });
         }
     }

@@ -2,6 +2,7 @@ package com.ps.mapreducedemo.reduce;
 
 import com.ps.mapreducedemo.MapReduceDemo;
 import com.ps.mapreducedemo.MapReduceNodeProcessor;
+import com.ps.mapreducedemo.util.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,6 +12,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Queue;
+
+import static com.ps.mapreducedemo.util.PathUtils.getSubPaths;
 
 /**
  * Created by Edwin on 4/21/2016.
@@ -22,7 +25,8 @@ public class WordReducer extends MapReduceNodeProcessor {
     Queue<String> wordQueue;
     MapReduceDemo context;
 
-    public WordReducer(Queue<String> wordQueue, MapReduceDemo context) {
+    public WordReducer(Queue<String> wordQueue, MapReduceDemo context, FileUtils fileUtils) {
+        super(fileUtils);
         this.wordQueue = wordQueue;
         this.context = context;
     }
@@ -73,7 +77,7 @@ public class WordReducer extends MapReduceNodeProcessor {
      */
     private long sumWordCounts(String word, Path inputPath) {
         long totalCountForWord = 0;
-        List<Path> partitionFileList = this.context.getSubPaths(inputPath, word + ".*.mp");
+        List<Path> partitionFileList = getSubPaths(inputPath, word + ".*.mp");
         for(Path partitionFile : partitionFileList)
         {
             totalCountForWord = totalCountForWord + getCurrentCountForWord(partitionFile);
