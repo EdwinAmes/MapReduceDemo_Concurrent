@@ -2,8 +2,8 @@ package ingest;
 
 import com.ps.mapreducedemo.MapReduceState;
 import com.ps.mapreducedemo.ingest.FileIngestor;
-import com.ps.mapreducedemo.util.FileUtils;
-import com.ps.mapreducedemo.util.PathUtils;
+import com.ps.mapreducedemo.util.IoUtils;
+import com.ps.mapreducedemo.util.IoUtilsImpl;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,6 +18,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 public class FileIngestorTest {
     private static Path basePath=null;
+    private IoUtils ioUtils;
     private FileIngestor sut;
     private MapReduceState mapReduceState;
 
@@ -31,8 +32,9 @@ public class FileIngestorTest {
 
     @Before
     public void setup(){
+        ioUtils = new IoUtilsImpl();
         mapReduceState = new MapReduceState();
-        sut = new FileIngestor(mapReduceState, new FileUtils());
+        sut = new FileIngestor(mapReduceState, ioUtils);
     }
 
     @Test
@@ -55,7 +57,7 @@ public class FileIngestorTest {
 
     @Test
     public void loads_3_Files_4_Lines_Correctly(){
-        PathUtils.loadInputFilePathsIntoQueue(basePath,mapReduceState);
+        ioUtils.loadInputFilePathsIntoQueue(basePath,mapReduceState);
         assertThat(mapReduceState.isFileIngestionComplete(), equalTo(false));
         assertThat(mapReduceState.getCountFilesQueuedForProcessing(), equalTo(3));
         assertThat(mapReduceState.getCountLinesQueuedForProcessing(), equalTo(0));

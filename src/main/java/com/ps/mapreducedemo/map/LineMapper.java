@@ -2,9 +2,9 @@ package com.ps.mapreducedemo.map;
 
 import com.ps.mapreducedemo.MapReduceDemo;
 import com.ps.mapreducedemo.MapReduceState;
-import com.ps.mapreducedemo.util.FileUtils;
+import com.ps.mapreducedemo.util.IoUtils;
 import com.ps.mapreducedemo.util.LineHistogramMaker;
-import com.ps.mapreducedemo.MapReduceNodeProcessor;
+import com.ps.mapreducedemo.MapReduceProcessor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -18,15 +18,15 @@ import java.util.Map;
  * Creates histogram (word frequency count) for a line of text
  * Writes a file named word.{count}.cnt for each word found
  */
-public class LineMapper extends MapReduceNodeProcessor {
+public class LineMapper extends MapReduceProcessor {
     static Logger logger = LogManager.getLogger(LineMapper.class);
 
     private MapReduceState mapReduceState;
     private MapReduceDemo context;
     private LineHistogramMaker histogramMaker = new LineHistogramMaker();
 
-    public LineMapper(MapReduceState mapReduceState, MapReduceDemo context, FileUtils fileUtils) {
-        super(fileUtils);
+    public LineMapper(MapReduceState mapReduceState, MapReduceDemo context, IoUtils ioUtils) {
+        super(ioUtils);
         this.mapReduceState = mapReduceState;
         this.context = context;
     }
@@ -46,9 +46,9 @@ public class LineMapper extends MapReduceNodeProcessor {
      * @return
      */
     private boolean mapLines() {
-        Path outputPath = context.loadBasePath().resolve(Paths.get(MapReduceDemo.MAP_FOLDER));
+        Path outputPath = ioUtils.resolvePath(context.loadBasePath(), MapReduceDemo.MAP_FOLDER);
 
-        ensureFolderExists(outputPath);
+        ioUtils.ensureFolderExists(outputPath);
 
         long threadId = Thread.currentThread().getId();
 
@@ -109,12 +109,12 @@ public class LineMapper extends MapReduceNodeProcessor {
         String fileName = word + ".thread." + threadId + ".mp";
         Path wordFilePath = outputPath.resolve(fileName);
 
-        long currentCountForWord = getCurrentCountForWord(wordFilePath);
+        long currentCountForWord = ioUtils.getCountFromFile(wordFilePath);
         currentCountForWord = currentCountForWord + entry.getValue();
 
         try {
             // Overwrite the file
-            fileUtils.overwriteFile(wordFilePath, Long.toString(currentCountForWord));
+            ioUtils.overwriteFile(wordFilePath, Long.toString(currentCountForWord));
         } catch (IOException e) {
             logger.error("Error Writing Mapping File Thread={} Word={}", threadId, word, e);
         }

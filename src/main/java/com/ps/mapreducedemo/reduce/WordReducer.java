@@ -1,32 +1,28 @@
 package com.ps.mapreducedemo.reduce;
 
 import com.ps.mapreducedemo.MapReduceDemo;
-import com.ps.mapreducedemo.MapReduceNodeProcessor;
-import com.ps.mapreducedemo.util.FileUtils;
+import com.ps.mapreducedemo.MapReduceProcessor;
+import com.ps.mapreducedemo.util.IoUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Queue;
-
-import static com.ps.mapreducedemo.util.PathUtils.getSubPaths;
 
 /**
  * Created by Edwin on 4/21/2016.
  * Reduces mapped files: sums the mapped files into final word count files - one per word/partition.
  */
-public class WordReducer extends MapReduceNodeProcessor {
+public class WordReducer extends MapReduceProcessor {
     static Logger logger = LogManager.getLogger(WordReducer.class);
 
     Queue<String> wordQueue;
     MapReduceDemo context;
 
-    public WordReducer(Queue<String> wordQueue, MapReduceDemo context, FileUtils fileUtils) {
-        super(fileUtils);
+    public WordReducer(Queue<String> wordQueue, MapReduceDemo context, IoUtils ioUtils) {
+        super(ioUtils);
         this.wordQueue = wordQueue;
         this.context = context;
     }
@@ -49,11 +45,17 @@ public class WordReducer extends MapReduceNodeProcessor {
     {
         long threadId = Thread.currentThread().getId();
 
-        Path inputPath = context.loadBasePath().resolve(Paths.get(MapReduceDemo.MAP_FOLDER));
-        ensureFolderExists(inputPath);
+        Path inputPath = ioUtils.resolvePath(context.loadBasePath(), MapReduceDemo.MAP_FOLDER);
+        if(inputPath==null){
+            return false;
+        }
+        ioUtils.ensureFolderExists(inputPath);
 
-        Path outputPath = context.loadBasePath().resolve(Paths.get(MapReduceDemo.REDUCE_FOLDER));
-        ensureFolderExists(outputPath);
+        Path outputPath = ioUtils.resolvePath(context.loadBasePath(), MapReduceDemo.REDUCE_FOLDER);
+        if(outputPath==null){
+            return false;
+        }
+        ioUtils.ensureFolderExists(outputPath);
 
         String currentWord=null;
         while((currentWord = this.wordQueue.poll()) != null)
@@ -61,8 +63,9 @@ public class WordReducer extends MapReduceNodeProcessor {
             long totalCountForCurrentWord = sumWordCounts(currentWord, inputPath);
 
             try {
-                // Overwrite the file
-                Files.write(outputPath.resolve(currentWord+"."+totalCountForCurrentWord+".cnt"), Long.toString(totalCountForCurrentWord).getBytes());
+                ioUtils.overwriteFile(
+                        outputPath.resolve(currentWord+"."+totalCountForCurrentWord+".cnt"),
+                        Long.toString(totalCountForCurrentWord));
             } catch (IOException e) {
                 logger.error("Error Writing Reduce File Thread={} Word={} ", threadId, currentWord);
             }
@@ -77,10 +80,10 @@ public class WordReducer extends MapReduceNodeProcessor {
      */
     private long sumWordCounts(String word, Path inputPath) {
         long totalCountForWord = 0;
-        List<Path> partitionFileList = getSubPaths(inputPath, word + ".*.mp");
-        for(Path partitionFile : partitionFileList)
+        List<Path> partitionFilePathList = ioUtils.getSubPaths(inputPath, word + ".*.mp");
+        for(Path partitionFilePath : partitionFilePathList)
         {
-            totalCountForWord = totalCountForWord + getCurrentCountForWord(partitionFile);
+            totalCountForWord = totalCountForWord + ioUtils.getCountFromFile(partitionFilePath);
         }
         return totalCountForWord;
     }

@@ -3,8 +3,8 @@ package com.ps.mapreducedemo;
 import com.ps.mapreducedemo.ingest.FileIngestor;
 import com.ps.mapreducedemo.map.LineMapper;
 import com.ps.mapreducedemo.reduce.WordReducer;
-import com.ps.mapreducedemo.util.PathUtils;
-import com.ps.mapreducedemo.util.FileUtils;
+import com.ps.mapreducedemo.util.IoUtils;
+import com.ps.mapreducedemo.util.IoUtilsImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,12 +39,12 @@ public class MapReduceDemo {
     private final int THREAD_POOL_COUNT = 10;
     private final int INGESTION_THREAD_COUNT = 1;
 
-    private final FileUtils fileUtils = new FileUtils();
+    private final IoUtils ioUtils = new IoUtilsImpl();
 
     private boolean cleanupOldResults() {
         Path mapPath = basePath.resolve(MapReduceDemo.MAP_FOLDER);
         try {
-            fileUtils.cleanDirectory(mapPath);
+            ioUtils.cleanDirectory(mapPath);
         } catch (IOException e) {
             logger.error("Cannot Clean Map Folder {}",mapPath);
             return false;
@@ -52,7 +52,7 @@ public class MapReduceDemo {
 
         Path reducePath = basePath.resolve(MapReduceDemo.REDUCE_FOLDER);
         try {
-            fileUtils.cleanDirectory(reducePath);
+            ioUtils.cleanDirectory(reducePath);
         } catch (IOException e) {
             logger.error("Cannot Clean Reduce Folder {}",reducePath);
             return false;
@@ -65,7 +65,7 @@ public class MapReduceDemo {
      * @param rootPath
      */
     public void doMapReduce(String rootPath) {
-        basePath = PathUtils.loadBasePath(rootPath);
+        basePath = ioUtils.loadBasePath(rootPath);
         if(basePath == null){
             return;
         }
@@ -79,7 +79,7 @@ public class MapReduceDemo {
 
         logger.trace("Begin Loading File List");
         // Find all files in /input directory and put paths in queue
-        PathUtils.loadInputFilePathsIntoQueue(basePath.resolve(MapReduceDemo.INPUT_FOLDER), mapReduceState);
+        ioUtils.loadInputFilePathsIntoQueue(basePath.resolve(MapReduceDemo.INPUT_FOLDER), mapReduceState);
         logger.trace("Done Loading File List");
 
         logger.trace("Begin File Ingestion and Mapping");
@@ -88,13 +88,13 @@ public class MapReduceDemo {
         // Using one thread pool for simplicity. Split threads between partitioning and mapping.
         // Assign threads to read files and produce lines => Ingest => Line Producer
         for(int threadIndex=0;threadIndex<INGESTION_THREAD_COUNT;threadIndex++) {
-            ingestAndMapHandlers.add(new FileIngestor(mapReduceState, fileUtils));
+            ingestAndMapHandlers.add(new FileIngestor(mapReduceState, ioUtils));
         }
 
         // Assign threads to read lines from queue and produce mapping files => Line Consumer
         for(int threadIndex=0;threadIndex<THREAD_POOL_COUNT-INGESTION_THREAD_COUNT;threadIndex++)
         {
-            ingestAndMapHandlers.add(new LineMapper(mapReduceState, this, fileUtils));
+            ingestAndMapHandlers.add(new LineMapper(mapReduceState, this, ioUtils));
         }
 
         boolean mappingSucceeded = false;
@@ -116,7 +116,7 @@ public class MapReduceDemo {
             Queue<String> wordQueue = mapReduceState.getWordQueueToProcess();
             for(int threadIndex=0;threadIndex<THREAD_POOL_COUNT;threadIndex++)
             {
-                reduceHandlers.add(new WordReducer(wordQueue, this, fileUtils));
+                reduceHandlers.add(new WordReducer(wordQueue, this, ioUtils));
             }
             try {
                 executor.invokeAll(reduceHandlers);
