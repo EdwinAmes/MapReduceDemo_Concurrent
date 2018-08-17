@@ -56,7 +56,6 @@ public class LineMapperTest {
         // Flag controls while thread while loop and must be true for code to end
         MatcherAssert.assertThat(mapReduceState.isFileIngestionComplete(), equalTo(true));
 
-        // TODO: Setup mapreducestate with fileIngestionComplete == true
         sut.run();
 
         Mockito.verify(ioUtils).overwriteFile(
