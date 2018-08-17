@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by Edwin on 4/21/2016.
@@ -24,6 +25,7 @@ public class LineMapper extends MapReduceProcessor {
     private MapReduceState mapReduceState;
     private MapReduceDemo context;
     private LineHistogramMaker histogramMaker = new LineHistogramMaker();
+    private static AtomicInteger lastLineNumber = new AtomicInteger();
 
     public LineMapper(MapReduceState mapReduceState, MapReduceDemo context, IoUtils ioUtils) {
         super(ioUtils);
@@ -66,8 +68,10 @@ public class LineMapper extends MapReduceProcessor {
         // Cannot get in before the FileIngestor has flipped flag, so won't get into wait mode.
         while((currentLine = mapReduceState.popNextLineFromQueue()) != null || !mapReduceState.isFileIngestionComplete()) {
                 if(currentLine != null) {
-                    logger.trace("Starting Processing Line Thread Id={} Line={}",  + threadId, currentLine);
-                    writeOrUpdateWordMappingFilesForLine(outputPath, threadId, currentLine);
+                    int lineNumber = lastLineNumber.incrementAndGet();
+                    logger.trace("Starting Processing Line Thread Id={} Line ID={} Line={}",
+                            threadId, lineNumber, currentLine);
+                    writeOrUpdateWordMappingFilesForLine(outputPath, lineNumber, currentLine);
                     mapReduceState.notifyOneLineConsumed();
                 }
                 else
@@ -106,7 +110,7 @@ public class LineMapper extends MapReduceProcessor {
         String word = entry.getKey();
 
         // Using the thread id in file name eliminates possibility of threads contending for file
-        String fileName = word + ".thread." + threadId + ".mp";
+        String fileName = word + ".line." + threadId + ".mp";
         Path wordFilePath = outputPath.resolve(fileName);
 
         long currentCountForWord = ioUtils.getCountFromFile(wordFilePath);

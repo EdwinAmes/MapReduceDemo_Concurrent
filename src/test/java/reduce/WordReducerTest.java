@@ -6,6 +6,7 @@ import com.ps.mapreducedemo.util.IoUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.*;
+import util.PathMatcher;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -131,19 +132,4 @@ public class WordReducerTest {
         );
     }
 
-    public class PathMatcher implements ArgumentMatcher<Path> {
-
-        private String leftFileName;
-        public PathMatcher(String leftFileName) {
-            this.leftFileName = leftFileName;
-        }
-
-        @Override
-        public boolean matches(Path rightPath) {
-            if(rightPath == null || leftFileName == null)
-                return false;
-            String rightFileName = rightPath.toString();
-            return rightFileName.startsWith(leftFileName);
-        }
-    }
 }
