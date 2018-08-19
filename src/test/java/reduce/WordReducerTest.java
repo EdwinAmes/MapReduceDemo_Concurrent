@@ -22,12 +22,10 @@ import static org.mockito.Mockito.when;
 public class WordReducerTest {
     @Mock
     private IoUtils ioUtils;
-    private MapReduceDemo context;
 
     @Before
     public void setup(){
         MockitoAnnotations.initMocks(this);
-        context = new MapReduceDemo();
     }
 
     /**

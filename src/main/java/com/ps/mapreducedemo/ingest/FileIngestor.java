@@ -12,6 +12,7 @@ import java.util.List;
 
 /**
  * Created by Edwin on 4/21/2016.
+ * Loads all lines from all files in target folder into queue for processing
  */
 public class FileIngestor extends MapReduceProcessor {
     private FileSplitter fileSplitter;
